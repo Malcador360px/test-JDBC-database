@@ -35,7 +35,7 @@ final class DBRetriever {
             }
         }
     }
-    static String retrieveCourses(Connection connection) throws SQLException {
+    static String retrieveAllCourses(Connection connection) throws SQLException {
         try (Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery("SELECT course_name, course_description FROM courses")) {
             return convertResultToString(resultSet);
@@ -66,6 +66,17 @@ final class DBRetriever {
             statement.setString(1, courseName);
             try (ResultSet resultSet = statement.executeQuery()) {
                 return getRow(resultSet);
+            }
+        }
+    }
+
+    static String retrieveStudentCourses(Connection connection, int studentId) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("SELECT courses.course_name FROM student_courses " +
+                "INNER JOIN courses ON student_courses.course_id = courses.course_id " +
+                "WHERE student_courses.student_id = ?")) {
+            statement.setInt(1, studentId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return convertResultToString(resultSet);
             }
         }
     }

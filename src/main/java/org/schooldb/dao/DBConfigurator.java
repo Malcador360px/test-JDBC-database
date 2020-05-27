@@ -16,6 +16,13 @@ final class DBConfigurator {
     private static final int NUMBER_OF_STUDENTS = 200;
     private static final int NUMBER_OF_GROUPS = 10;
     private static final int MINIMUM_PER_GROUP = 10;
+    private static final int MINIMUM_COURSES = 1;
+    private static final int ID_GENERATION_ADJUSTER = 1;
+    private static final String GROUP_NAME_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private static final String GROUP_NAME_DIGITS = "0123456789";
+    private static final String LETTERS_DIGITS_SEPARATOR = "-";
+    private static final int LETTERS_DIGITS_IN_NAME = 2;
+    private static final String WHITESPACE = " ";
 
     private DBConfigurator() {}
 
@@ -23,7 +30,6 @@ final class DBConfigurator {
         if (!checkExistingTables(connection, tableNames)) {
             dropConflictingTables(connection, tableNames);
         }
-
         for (File tableFile : tableFiles) {
             new ScriptRunner(connection).runScript(new BufferedReader(new FileReader(tableFile)));
         }
@@ -31,7 +37,7 @@ final class DBConfigurator {
     }
 
     private static boolean checkExistingTables(Connection connection, String[] tableNames) throws SQLException {
-        try (ResultSet tablesInDB = connection.getMetaData().getTables(null, null,ALL_NAME_FORMATS_WILDCARD, null)) {
+        try (ResultSet tablesInDB = connection.getMetaData().getTables(null, null, ALL_NAME_FORMATS_WILDCARD, null)) {
             while (tablesInDB.next()) {
                 if (Arrays.asList(tableNames).contains(tablesInDB.getString(TABLE_NAMES_META_DATA_POS))) {
                     return false;
@@ -51,6 +57,8 @@ final class DBConfigurator {
 
     static void generateTestData(Connection connection, File[] testDataFiles) throws SQLException, IOException {
         List<String> courses = readCourses(testDataFiles[0]);
+        int firstNamePos = 0;
+        int lastNamePos = 1;
         try (PreparedStatement statement = connection.prepareStatement("INSERT INTO student_groups(group_name) VALUES(?)")) {
             for (String groupName : generateGroups()) {
                 statement.setString(1, groupName);
@@ -65,8 +73,8 @@ final class DBConfigurator {
         }
         try (PreparedStatement statement = connection.prepareStatement("INSERT INTO students(first_name, last_name) VALUES(?, ?)")) {
             for (String student : generateStudents(testDataFiles[1], testDataFiles[2])) {
-                statement.setString(1, student.split(" ")[0]);
-                statement.setString(2, student.split(" ")[1]);
+                statement.setString(1, student.split(WHITESPACE)[firstNamePos]);
+                statement.setString(2, student.split(WHITESPACE)[lastNamePos]);
                 statement.execute();
             }
         }
@@ -75,11 +83,12 @@ final class DBConfigurator {
     }
 
     private static void relateTestData(Connection connection, List<String> courses) throws SQLException {
-        List<Integer> groupIds = IntStream.range(1, NUMBER_OF_GROUPS + 1).boxed().collect(Collectors.toList());
-        List<Integer> studentIds = IntStream.range(1, NUMBER_OF_STUDENTS + 1).boxed().collect(Collectors.toList());
+        List<Integer> groupIds = IntStream.range(1, NUMBER_OF_GROUPS + ID_GENERATION_ADJUSTER).boxed().collect(Collectors.toList());
+        List<Integer> studentIds = IntStream.range(1, NUMBER_OF_STUDENTS + ID_GENERATION_ADJUSTER).boxed().collect(Collectors.toList());
         for (int studentId : studentIds) {
-            for (int i = 0; i <= new Random().nextInt(2); i++) {
-                int courseId = new Random().nextInt(courses.size()) + 1;
+            int coursesNumberForStudent = new Random().nextInt(2) + MINIMUM_COURSES;
+            for (int i = 1; i <= coursesNumberForStudent; i++) {
+                int courseId = new Random().nextInt(courses.size()) + ID_GENERATION_ADJUSTER;
                 try (PreparedStatement statement = connection.prepareStatement("INSERT INTO student_courses(student_id,course_id) VALUES(?, ?)")) {
                     statement.setInt(1, studentId);
                     statement.setInt(2, courseId);
@@ -105,14 +114,14 @@ final class DBConfigurator {
         List<String> groups = new ArrayList<>();
         for (int group = 0; group < NUMBER_OF_GROUPS; group++) {
             StringBuilder groupName = new StringBuilder();
-            String letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            String digits = "0123456789";
-            for (int i = 0; i < 2; i++) {
-                groupName.append(letters.charAt(new Random().nextInt(letters.length())));
+            for (int i = 0; i < LETTERS_DIGITS_IN_NAME; i++) {
+                groupName.append(GROUP_NAME_LETTERS
+                        .charAt(new Random().nextInt(GROUP_NAME_LETTERS.length())));
             }
-            groupName.append("-");
-            for (int i = 0; i < 2; i++) {
-                groupName.append(digits.charAt(new Random().nextInt(digits.length())));
+            groupName.append(LETTERS_DIGITS_SEPARATOR);
+            for (int i = 0; i < LETTERS_DIGITS_IN_NAME; i++) {
+                groupName.append(GROUP_NAME_DIGITS
+                        .charAt(new Random().nextInt(GROUP_NAME_DIGITS.length())));
             }
             groups.add(groupName.toString());
         }
