@@ -11,8 +11,6 @@ import java.util.stream.IntStream;
 
 final class DBConfigurator {
 
-    private static final int TABLE_NAMES_META_DATA_POS = 3;
-    private static final String ALL_NAME_FORMATS_WILDCARD = "%";
     private static final int NUMBER_OF_STUDENTS = 200;
     private static final int NUMBER_OF_GROUPS = 10;
     private static final int MINIMUM_PER_GROUP = 10;
@@ -23,59 +21,42 @@ final class DBConfigurator {
     private static final String LETTERS_DIGITS_SEPARATOR = "-";
     private static final int LETTERS_DIGITS_IN_NAME = 2;
     private static final String WHITESPACE = " ";
+    private static final String INSERT_GROUPS = "INSERT INTO groups(group_name) VALUES(?)";
+    private static final String INSERT_COURSES = "INSERT INTO courses(course_name) VALUES(?)";
+    private static final String INSERT_STUDENTS = "INSERT INTO students(first_name, last_name) VALUES(?, ?)";
+    private static final String ASSIGN_TO_COURSE = "INSERT INTO student_courses(student_id,course_id) VALUES(?, ?)";
+    private static final String ASSIGN_TO_GROUP = "UPDATE students SET group_id = ? WHERE student_id = ?";
 
     private DBConfigurator() {}
 
-    static void createTables(Connection connection, String[] tableNames, File[] tableFiles) throws SQLException, IOException {
-        if (!checkExistingTables(connection, tableNames)) {
-            dropConflictingTables(connection, tableNames);
-        }
+    static void createTables(Connection connection, File[] tableFiles) throws SQLException, IOException {
         for (File tableFile : tableFiles) {
             new ScriptRunner(connection).runScript(new BufferedReader(new FileReader(tableFile)));
         }
         connection.commit();
     }
 
-    private static boolean checkExistingTables(Connection connection, String[] tableNames) throws SQLException {
-        try (ResultSet tablesInDB = connection.getMetaData().getTables(null, null, ALL_NAME_FORMATS_WILDCARD, null)) {
-            while (tablesInDB.next()) {
-                if (Arrays.asList(tableNames).contains(tablesInDB.getString(TABLE_NAMES_META_DATA_POS))) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    private static void dropConflictingTables(Connection connection, String[] tableNames) throws SQLException {
-        try (Statement statement = connection.createStatement()) {
-            for (String tableName : tableNames) {
-                statement.execute("DROP TABLE IF EXISTS " + tableName + " CASCADE");
-            }
-        }
-    }
-
     static void generateTestData(Connection connection, File[] testDataFiles) throws SQLException, IOException {
         List<String> courses = readCourses(testDataFiles[0]);
         int firstNamePos = 0;
         int lastNamePos = 1;
-        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO student_groups(group_name) VALUES(?)")) {
+        try (PreparedStatement statement = connection.prepareStatement(INSERT_GROUPS)) {
             for (String groupName : generateGroups()) {
                 statement.setString(1, groupName);
-                statement.execute();
+                statement.executeUpdate();
             }
         }
-        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO courses(course_name) VALUES(?)")) {
+        try (PreparedStatement statement = connection.prepareStatement(INSERT_COURSES)) {
             for (String course : courses) {
                 statement.setString(1, course);
-                statement.execute();
+                statement.executeUpdate();
             }
         }
-        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO students(first_name, last_name) VALUES(?, ?)")) {
+        try (PreparedStatement statement = connection.prepareStatement(INSERT_STUDENTS)) {
             for (String student : generateStudents(testDataFiles[1], testDataFiles[2])) {
                 statement.setString(1, student.split(WHITESPACE)[firstNamePos]);
                 statement.setString(2, student.split(WHITESPACE)[lastNamePos]);
-                statement.execute();
+                statement.executeUpdate();
             }
         }
         relateTestData(connection, courses);
@@ -89,10 +70,10 @@ final class DBConfigurator {
             int coursesNumberForStudent = new Random().nextInt(2) + MINIMUM_COURSES;
             for (int i = 1; i <= coursesNumberForStudent; i++) {
                 int courseId = new Random().nextInt(courses.size()) + ID_GENERATION_ADJUSTER;
-                try (PreparedStatement statement = connection.prepareStatement("INSERT INTO student_courses(student_id,course_id) VALUES(?, ?)")) {
+                try (PreparedStatement statement = connection.prepareStatement(ASSIGN_TO_COURSE)) {
                     statement.setInt(1, studentId);
                     statement.setInt(2, courseId);
-                    statement.execute();
+                    statement.executeUpdate();
                 }
             }
         }
@@ -101,10 +82,10 @@ final class DBConfigurator {
             int studentsInGroup = new Random().nextInt(20) + MINIMUM_PER_GROUP;
             for (int student = 0; student < studentsInGroup ; student++) {
                 int studentId = studentIds.remove(new Random().nextInt(studentIds.size()));
-                try (PreparedStatement statement = connection.prepareStatement("UPDATE students SET group_id = ? WHERE student_id = ?")) {
+                try (PreparedStatement statement = connection.prepareStatement(ASSIGN_TO_GROUP)) {
                     statement.setInt(1, groupId);
                     statement.setInt(2, studentId);
-                    statement.execute();
+                    statement.executeUpdate();
                 }
             }
         }

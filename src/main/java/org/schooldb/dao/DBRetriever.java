@@ -8,42 +8,49 @@ final class DBRetriever {
     private static final String COLUMN_SEPARATOR = " | ";
     private static final String NEW_LINE = "\n";
     private static final String WHITESPACE = " ";
+    private static final String RETRIEVE_GROUPS = "SELECT group_name, COUNT(students.group_id) FROM groups " +
+            "INNER JOIN students ON students.group_id = groups.group_id " +
+            "GROUP BY students.group_id, groups.group_name HAVING COUNT(students.group_id) <= ?";
+    private static final String RETRIEVE_STUDENTS_BY_COURSE = "SELECT students.student_id, students.first_name, students.last_name FROM courses " +
+            "INNER JOIN student_courses ON courses.course_id = student_courses.course_id " +
+            "INNER JOIN students ON student_courses.student_id = students.student_id " +
+            "WHERE courses.course_name = ?";
+    private static final String RETRIEVE_ALL_COURSES = "SELECT course_name, course_description FROM courses";
+    private static final String RETRIEVE_STUDENT_NAME = "SELECT first_name, last_name FROM students WHERE student_id = ?";
+    private static final String RETRIEVE_STUDENT_ID = "SELECT student_id FROM students WHERE first_name = ? AND last_name = ?";
+    private static final String RETRIEVE_COURSE_ID = "SELECT course_id FROM courses WHERE course_name = ?";
+    private static final String RETRIEVE_STUDENT_COURSES = "SELECT courses.course_name FROM student_courses " +
+            "INNER JOIN courses ON student_courses.course_id = courses.course_id " +
+            "WHERE student_courses.student_id = ?";
 
     private DBRetriever() {}
 
     static String retrieveGroups(Connection connection, int studentsNumber) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT group_name, COUNT(students.group_id) FROM student_groups " +
-                "INNER JOIN students ON students.group_id = student_groups.group_id " +
-                "GROUP BY students.group_id, student_groups.group_name HAVING COUNT(students.group_id) <= ?")) {
+        try (PreparedStatement statement = connection.prepareStatement(RETRIEVE_GROUPS)) {
             statement.setInt(1, studentsNumber);
             try (ResultSet resultSet = statement.executeQuery()) {
-                return convertResultToString(resultSet);
+                return getColumns(resultSet);
             }
         }
     }
 
     static String retrieveStudents(Connection connection, String courseName) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT students.student_id, students.first_name, students.last_name FROM courses " +
-                "INNER JOIN student_courses ON courses.course_id = student_courses.course_id " +
-                "INNER JOIN students ON student_courses.student_id = students.student_id " +
-                "WHERE courses.course_name = ?")) {
+        try (PreparedStatement statement = connection.prepareStatement(RETRIEVE_STUDENTS_BY_COURSE)) {
             statement.setString(1, courseName);
             try (ResultSet resultSet = statement.executeQuery()) {
-                return convertResultToString(resultSet);
+                return getColumns(resultSet);
             }
         }
     }
     static String retrieveAllCourses(Connection connection) throws SQLException {
         try (Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery("SELECT course_name, course_description FROM courses")) {
-            return convertResultToString(resultSet);
+             ResultSet resultSet = statement.executeQuery(RETRIEVE_ALL_COURSES)) {
+            return getColumns(resultSet);
         }
     }
 
     static String retrieveStudentName(Connection connection, int studentId) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("SELECT first_name, last_name FROM students WHERE student_id = ?")) {
+        try (PreparedStatement statement = connection.prepareStatement(RETRIEVE_STUDENT_NAME)) {
             statement.setInt(1, studentId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 return getRow(resultSet);
@@ -52,7 +59,7 @@ final class DBRetriever {
     }
 
     static String retrieveStudentId(Connection connection, String firstName, String lastName) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("SELECT student_id FROM students WHERE first_name = ? AND last_name = ?")) {
+        try (PreparedStatement statement = connection.prepareStatement(RETRIEVE_STUDENT_ID)) {
             statement.setString(1, firstName);
             statement.setString(2, lastName);
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -62,7 +69,7 @@ final class DBRetriever {
     }
 
     static String retrieveCourseId(Connection connection, String courseName) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("SELECT course_id FROM courses WHERE course_name = ?")) {
+        try (PreparedStatement statement = connection.prepareStatement(RETRIEVE_COURSE_ID)) {
             statement.setString(1, courseName);
             try (ResultSet resultSet = statement.executeQuery()) {
                 return getRow(resultSet);
@@ -71,17 +78,15 @@ final class DBRetriever {
     }
 
     static String retrieveStudentCourses(Connection connection, int studentId) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("SELECT courses.course_name FROM student_courses " +
-                "INNER JOIN courses ON student_courses.course_id = courses.course_id " +
-                "WHERE student_courses.student_id = ?")) {
+        try (PreparedStatement statement = connection.prepareStatement(RETRIEVE_STUDENT_COURSES)) {
             statement.setInt(1, studentId);
             try (ResultSet resultSet = statement.executeQuery()) {
-                return convertResultToString(resultSet);
+                return getColumns(resultSet);
             }
         }
     }
 
-    private static String convertResultToString(ResultSet resultSet) throws SQLException {
+    private static String getColumns(ResultSet resultSet) throws SQLException {
         ResultSetMetaData metaData = resultSet.getMetaData();
         StringBuilder output = new StringBuilder();
         int columnsNumber = metaData.getColumnCount();
