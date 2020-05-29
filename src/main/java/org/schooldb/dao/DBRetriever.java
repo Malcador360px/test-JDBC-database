@@ -55,7 +55,7 @@ final class DBRetriever {
         try (PreparedStatement statement = connection.prepareStatement(RETRIEVE_STUDENT_NAME)) {
             statement.setInt(1, studentId);
             try (ResultSet resultSet = statement.executeQuery()) {
-                return getRow(resultSet);
+                return getAsRow(resultSet);
             }
         }
     }
@@ -65,7 +65,7 @@ final class DBRetriever {
             statement.setString(1, firstName);
             statement.setString(2, lastName);
             try (ResultSet resultSet = statement.executeQuery()) {
-                return getRow(resultSet);
+                return getAsRow(resultSet);
             }
         }
     }
@@ -74,7 +74,7 @@ final class DBRetriever {
         try (PreparedStatement statement = connection.prepareStatement(RETRIEVE_COURSE_ID)) {
             statement.setString(1, courseName);
             try (ResultSet resultSet = statement.executeQuery()) {
-                return getRow(resultSet);
+                return getAsRow(resultSet);
             }
         }
     }
@@ -96,7 +96,7 @@ final class DBRetriever {
         return output.toString();
     }
 
-    private static String getRow(ResultSet resultSet) throws SQLException {
+    private static String getAsRow(ResultSet resultSet) throws SQLException {
         ResultSetMetaData metaData = resultSet.getMetaData();
         StringBuilder output = new StringBuilder();
         int columnsNumber = metaData.getColumnCount();
