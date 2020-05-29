@@ -1,6 +1,7 @@
 package org.schooldb.dao;
 
 import java.sql.*;
+import java.util.Collections;
 
 
 final class DBRetriever {
@@ -22,6 +23,7 @@ final class DBRetriever {
     private static final String RETRIEVE_STUDENT_COURSES = "SELECT courses.course_name FROM student_courses " +
             "INNER JOIN courses ON student_courses.course_id = courses.course_id " +
             "WHERE student_courses.student_id = ?";
+    private static final int OUTPUT_COLUMN_WIDTH = 50;
 
     private DBRetriever() {}
 
@@ -87,25 +89,10 @@ final class DBRetriever {
     }
 
     private static String getColumns(ResultSet resultSet) throws SQLException {
-        ResultSetMetaData metaData = resultSet.getMetaData();
         StringBuilder output = new StringBuilder();
-        int columnsNumber = metaData.getColumnCount();
-        for (int i = 1; i <= columnsNumber; i++) {
-            if (i > 1) {
-                output.append(COLUMN_SEPARATOR);
-            }
-            output.append(metaData.getColumnName(i));
-        }
+        writeColumnHeaders(output, resultSet);
         output.append(NEW_LINE);
-        while (resultSet.next()) {
-            for (int i = 1; i <= columnsNumber; i++) {
-                if (i > 1) {
-                    output.append(COLUMN_SEPARATOR);
-                }
-                output.append(resultSet.getString(i));
-            }
-            output.append(NEW_LINE);
-            }
+        writeColumns(output, resultSet);
         return output.toString();
     }
 
@@ -123,5 +110,39 @@ final class DBRetriever {
             }
         }
         return output.toString();
+    }
+
+    private static void writeColumnHeaders(StringBuilder output, ResultSet table) throws SQLException {
+        ResultSetMetaData metaData = table.getMetaData();
+        int columnsNumber = metaData.getColumnCount();
+        for (int i = 1; i <= columnsNumber; i++) {
+            if (i > 1) {
+                output.append(COLUMN_SEPARATOR);
+            }
+            output.append(metaData.getColumnName(i));
+            output.append(repeatString(WHITESPACE,
+                    OUTPUT_COLUMN_WIDTH - metaData.getColumnName(i).length()));
+        }
+    }
+
+    private static void writeColumns(StringBuilder output, ResultSet table) throws SQLException {
+        int columnsNumber = table.getMetaData().getColumnCount();
+        while (table.next()) {
+            for (int i = 1; i <= columnsNumber; i++) {
+                if (i > 1) {
+                    output.append(COLUMN_SEPARATOR);
+                }
+                output.append(table.getString(i));
+                if (table.getString(i) != null) {
+                    output.append(repeatString(WHITESPACE,
+                            OUTPUT_COLUMN_WIDTH - table.getString(i).length()));
+                }
+            }
+            output.append(NEW_LINE);
+        }
+    }
+
+    private static String repeatString(String str, int copies) {
+        return String.join("", Collections.nCopies(copies, str));
     }
 }
