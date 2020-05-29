@@ -20,7 +20,7 @@ public final class Commander {
         Runnable[] commands = {() -> DBInterface.findGroupsByStudentsNumber(connection),
                 () -> DBInterface.findStudentsByCourse(connection), () -> DBInterface.addNewStudent(connection),
                 () -> DBInterface.removeStudent(connection), () -> DBInterface.addStudentToCourse(connection),
-                () -> DBInterface.removeStudentFromCourse(connection), () -> System.exit(0)};
+                () -> DBInterface.removeStudentFromCourse(connection), () -> DBInterface.exitDB(connection)};
 
         try {
             IntStream.range(0, commandIds.length).boxed()

@@ -16,11 +16,14 @@ public final class DBInterface {
     private static final String LAST_NAME_REQUEST = "Type in student last name :";
     private static final String COURSE_NAME_REQUEST = "Type in course name :";
     private static final String STUDENT_NUMBER_REQUEST = "Type in number of students :";
-    private static final String SQLE_ERROR_WARNING = "An error in database has occurred!" +
-            "\nPlease, report to your SYS admin\n";
+    private static final String REPORT_REMINDER = "Please, report to your SYS admin\n";
+    private static final String SQL_ERROR_WARNING = "An error in database has occurred!\n" +
+            REPORT_REMINDER;
     private static final String RECORD_NOT_FOUND = "Such record is not present in database\n";
     private static final String IO_ERROR_WARNING = "Could not read data from file\n" +
-            "\nPlease, report to your SYS admin\n";
+            REPORT_REMINDER;
+    private static final String UNABLE_TO_CLOSE_CONNECTION = "Unable to close connection\n" +
+            REPORT_REMINDER;
     private static final String STUDENT_ALREADY_IN_DB = "Student is already present in database\n";
     private static final String STUDENT_WRONG_COURSE = "Student does not attend this course\n";
     private static final String STUDENT_ADDED = "New student added successfully! ID : %s\n";
@@ -36,7 +39,7 @@ public final class DBInterface {
             DBConfigurator.createTables(connection, tableFiles);
             DBConfigurator.generateTestData(connection, testDataFiles);
         } catch (SQLException e) {
-            LOGGER.warning(SQLE_ERROR_WARNING);
+            LOGGER.warning(SQL_ERROR_WARNING);
         } catch (IOException e) {
             LOGGER.warning(IO_ERROR_WARNING);
         }
@@ -47,7 +50,7 @@ public final class DBInterface {
         try {
             System.out.println(DBRetriever.retrieveGroups(connection, new Scanner(System.in).nextInt()));
         } catch (SQLException e) {
-         LOGGER.warning(SQLE_ERROR_WARNING);
+         LOGGER.warning(SQL_ERROR_WARNING);
         }
     }
 
@@ -60,7 +63,7 @@ public final class DBInterface {
             }
             System.out.println(DBRetriever.retrieveStudents(connection, courseName));
         } catch (SQLException e) {
-            LOGGER.warning(SQLE_ERROR_WARNING);
+            LOGGER.warning(SQL_ERROR_WARNING);
         } catch (IllegalArgumentException e) {
             System.err.println(RECORD_NOT_FOUND);
         }
@@ -79,7 +82,7 @@ public final class DBInterface {
             System.out.println(String.format(STUDENT_ADDED,
                     DBRetriever.retrieveStudentId(connection, firstName, lastName)));
         } catch (SQLException e) {
-            LOGGER.warning(SQLE_ERROR_WARNING);
+            LOGGER.warning(SQL_ERROR_WARNING);
         } catch (IllegalArgumentException e) {
             System.err.println(STUDENT_ALREADY_IN_DB);
         }
@@ -96,7 +99,7 @@ public final class DBInterface {
             DBOperator.removeStudent(connection, studentId);
             System.out.println(String.format(STUDENT_REMOVED, removedStudent));
         } catch (SQLException e) {
-            LOGGER.warning(SQLE_ERROR_WARNING);
+            LOGGER.warning(SQL_ERROR_WARNING);
         } catch (IllegalArgumentException e) {
             System.err.println(RECORD_NOT_FOUND);
         }
@@ -118,7 +121,7 @@ public final class DBInterface {
             DBOperator.addStudentToCourse(connection, studentId, courseName);
             System.out.println(STUDENT_ADDED_TO_COURSE);
         } catch (SQLException e) {
-            LOGGER.warning(SQLE_ERROR_WARNING);
+            LOGGER.warning(SQL_ERROR_WARNING);
         } catch (IllegalArgumentException e) {
             System.err.println(RECORD_NOT_FOUND);
         }
@@ -144,11 +147,21 @@ public final class DBInterface {
             DBOperator.removeStudentFromCourse(connection, studentId, courseName);
             System.out.println(STUDENT_REMOVED_FROM_COURSE);
         } catch (SQLException e) {
-            LOGGER.warning(SQLE_ERROR_WARNING);
+            LOGGER.warning(SQL_ERROR_WARNING);
         } catch (IllegalCharsetNameException e) {
             System.err.println(STUDENT_WRONG_COURSE);
         } catch (IllegalArgumentException e) {
             System.err.println(RECORD_NOT_FOUND);
+        }
+    }
+
+    public static void exitDB(Connection connection) {
+        try {
+            connection.close();
+            System.exit(0);
+        } catch (SQLException e) {
+            LOGGER.warning(UNABLE_TO_CLOSE_CONNECTION);
+            System.exit(-1);
         }
     }
 
