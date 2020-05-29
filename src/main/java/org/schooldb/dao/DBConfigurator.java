@@ -31,7 +31,9 @@ final class DBConfigurator {
 
     static void createTables(Connection connection, File[] tableFiles) throws SQLException, IOException {
         for (File tableFile : tableFiles) {
-            new ScriptRunner(connection).runScript(new BufferedReader(new FileReader(tableFile)));
+            ScriptRunner scriptRunner = new ScriptRunner(connection);
+            scriptRunner.setLogWriter(null);
+            scriptRunner.runScript(new FileReader(tableFile));
         }
         connection.commit();
     }
