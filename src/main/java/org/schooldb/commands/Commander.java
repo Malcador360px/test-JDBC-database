@@ -11,7 +11,7 @@ import java.util.stream.IntStream;
 
 public final class Commander {
 
-    private static final String INPUT_ERR = "Incorrect input, please only requested sequences";
+    private static final String INPUT_ERR = "Incorrect input, please use only requested sequences";
 
     private Commander() {}
 
