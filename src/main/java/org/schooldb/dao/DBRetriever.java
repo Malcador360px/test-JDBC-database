@@ -96,7 +96,7 @@ final class DBRetriever {
         return output.toString();
     }
 
-    private static String getRow(ResultSet resultSet) throws SQLException{
+    private static String getRow(ResultSet resultSet) throws SQLException {
         ResultSetMetaData metaData = resultSet.getMetaData();
         StringBuilder output = new StringBuilder();
         int columnsNumber = metaData.getColumnCount();
