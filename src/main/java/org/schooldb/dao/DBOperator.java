@@ -9,10 +9,10 @@ final class DBOperator {
 
     private static final String ADD_STUDENT = "INSERT INTO students(first_name, last_name) VALUES(?, ?)";
     private static final String DELETE_STUDENT = "DELETE FROM students WHERE student_id = ?";
-    private static final String ADD_STUDENT_TO_COURSE = "INSERT INTO student_courses(course_id, student_id) " +
+    private static final String ADD_STUDENT_TO_COURSE = "INSERT INTO students_courses(course_id, student_id) " +
             "SELECT courses.course_id, students.student_id FROM courses, students " +
             "WHERE courses.course_name = ? AND students.student_id = ?";
-    private static final String DELETE_STUDENT_FROM_COURSE = "DELETE FROM student_courses " +
+    private static final String DELETE_STUDENT_FROM_COURSE = "DELETE FROM students_courses " +
             "WHERE student_id = ? AND course_id = (" +
             "SELECT course_id FROM courses WHERE course_name = ?)";
 

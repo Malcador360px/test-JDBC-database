@@ -13,16 +13,16 @@ final class DBRetriever {
             "INNER JOIN students ON students.group_id = groups.group_id " +
             "GROUP BY students.group_id, groups.group_name HAVING COUNT(students.group_id) <= ?";
     private static final String RETRIEVE_STUDENTS_BY_COURSE = "SELECT students.student_id, students.first_name, students.last_name FROM courses " +
-            "INNER JOIN student_courses ON courses.course_id = student_courses.course_id " +
-            "INNER JOIN students ON student_courses.student_id = students.student_id " +
+            "INNER JOIN students_courses ON courses.course_id = students_courses.course_id " +
+            "INNER JOIN students ON students_courses.student_id = students.student_id " +
             "WHERE courses.course_name = ?";
     private static final String RETRIEVE_ALL_COURSES = "SELECT course_name, course_description FROM courses";
     private static final String RETRIEVE_STUDENT_NAME = "SELECT first_name, last_name FROM students WHERE student_id = ?";
     private static final String RETRIEVE_STUDENT_ID = "SELECT student_id FROM students WHERE first_name = ? AND last_name = ?";
     private static final String RETRIEVE_COURSE_ID = "SELECT course_id FROM courses WHERE course_name = ?";
-    private static final String RETRIEVE_STUDENT_COURSES = "SELECT courses.course_name FROM student_courses " +
-            "INNER JOIN courses ON student_courses.course_id = courses.course_id " +
-            "WHERE student_courses.student_id = ?";
+    private static final String RETRIEVE_STUDENT_COURSES = "SELECT courses.course_name FROM students_courses " +
+            "INNER JOIN courses ON students_courses.course_id = courses.course_id " +
+            "WHERE students_courses.student_id = ?";
     private static final int OUTPUT_COLUMN_WIDTH = 50;
 
     private DBRetriever() {}

@@ -1,8 +1,8 @@
 package org.schooldb;
 
-import org.schooldb.commands.Commander;
+import org.schooldb.commands.CommandsManager;
 import org.schooldb.dao.DBConnector;
-import org.schooldb.dao.DBInterface;
+import org.schooldb.dao.DBManager;
 import org.schooldb.util.Config;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -24,11 +24,11 @@ public class Main {
 
     public static void main(String[] args) {
         try (Connection connection = DBConnector.getConnection()) {
-            DBInterface.configureDB(connection, getFile(Config.getArrayProperty("SQL_TABLE_FILES")),
-                    getFile(Config.getArrayProperty("TEST_DATA_FILES")));
+            DBManager.configureDB(connection, getFile(Config.getArrayProperty("SQL_TABLE_FILES"), Config.getProperty("DB_FOLDER")),
+                    getFile(Config.getArrayProperty("TEST_DATA_FILES"), Config.getProperty("TEST_DATA_FOLDER")));
             while (true) {
                 System.out.println(MENU);
-                Commander.executeCommand(connection);
+                CommandsManager.executeCommand(connection);
             }
         } catch (SQLException e) {
             LOGGER.warning(CONNECTION_ERR);

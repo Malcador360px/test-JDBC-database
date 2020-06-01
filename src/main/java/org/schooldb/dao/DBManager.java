@@ -9,7 +9,7 @@ import java.util.Scanner;
 import java.util.logging.Logger;
 
 
-public final class DBInterface {
+public final class DBManager {
 
     private static final String STUDENT_ID_REQUEST = "Type in student ID :";
     private static final String FIRST_NAME_REQUEST = "Type in student first name :";
@@ -26,18 +26,19 @@ public final class DBInterface {
             REPORT_REMINDER;
     private static final String STUDENT_ALREADY_IN_DB = "Student is already present in database\n";
     private static final String STUDENT_WRONG_COURSE = "Student does not attend this course\n";
+    private static final String STUDENT_ALREADY_ASSIGN = "Student already attends this course\n";
     private static final String STUDENT_ADDED = "New student added successfully! ID : %s\n";
     private static final String STUDENT_REMOVED = "Student %s removed successfully!\n";
     private static final String STUDENT_ADDED_TO_COURSE = "Student added to course successfully!\n";
     private static final String STUDENT_REMOVED_FROM_COURSE = "Student removed from course successfully!\n";
-    private static final Logger LOGGER = Logger.getLogger(DBInterface.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(DBManager.class.getName());
 
-    private DBInterface() {}
+    private DBManager() {}
 
     public static void configureDB(Connection connection, File[] tableFiles, File[] testDataFiles) {
         try {
             DBConfigurator.createTables(connection, tableFiles);
-            DBConfigurator.generateTestData(connection, testDataFiles);
+            DBConfigurator.createTestData(connection, testDataFiles);
         } catch (SQLException e) {
             LOGGER.warning(SQL_ERROR_WARNING);
         } catch (IOException e) {
@@ -110,6 +111,7 @@ public final class DBInterface {
             System.out.println(DBRetriever.retrieveAllCourses(connection));
             System.out.println(STUDENT_ID_REQUEST);
             int studentId = new Scanner(System.in).nextInt();
+            String studentCourses = DBRetriever.retrieveStudentCourses(connection, studentId);
             if (checkStudentId(connection, studentId)) {
                 throw new IllegalArgumentException();
             }
@@ -118,10 +120,15 @@ public final class DBInterface {
             if (checkCourse(connection, courseName)) {
                 throw new IllegalArgumentException();
             }
+            if (studentCourses.contains(courseName)) {
+                throw new IllegalCharsetNameException("");
+            }
             DBOperator.addStudentToCourse(connection, studentId, courseName);
             System.out.println(STUDENT_ADDED_TO_COURSE);
         } catch (SQLException e) {
             LOGGER.warning(SQL_ERROR_WARNING);
+        } catch (IllegalCharsetNameException e) {
+            System.err.println(STUDENT_ALREADY_ASSIGN);
         } catch (IllegalArgumentException e) {
             System.err.println(RECORD_NOT_FOUND);
         }

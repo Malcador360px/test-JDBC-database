@@ -22,56 +22,55 @@ final class DBConfigurator {
     private static final int LETTERS_DIGITS_IN_NAME = 2;
     private static final String WHITESPACE = " ";
     private static final String INSERT_GROUPS = "INSERT INTO groups(group_name) VALUES(?)";
-    private static final String INSERT_COURSES = "INSERT INTO courses(course_name) VALUES(?)";
+    private static final String INSERT_COURSES = "INSERT INTO courses(course_name, course_description) VALUES(?, ?)";
     private static final String INSERT_STUDENTS = "INSERT INTO students(first_name, last_name) VALUES(?, ?)";
-    private static final String ASSIGN_TO_COURSE = "INSERT INTO student_courses(student_id,course_id) VALUES(?, ?)";
+    private static final String ASSIGN_TO_COURSE = "INSERT INTO students_courses(student_id,course_id) VALUES(?, ?)";
     private static final String ASSIGN_TO_GROUP = "UPDATE students SET group_id = ? WHERE student_id = ?";
 
     private DBConfigurator() {}
 
     static void createTables(Connection connection, File[] tableFiles) throws SQLException, IOException {
-        for (File tableFile : tableFiles) {
-            ScriptRunner scriptRunner = new ScriptRunner(connection);
-            scriptRunner.setLogWriter(null);
-            scriptRunner.runScript(new FileReader(tableFile));
+        try {
+            for (File tableFile : tableFiles) {
+                ScriptRunner scriptRunner = new ScriptRunner(connection);
+                scriptRunner.setLogWriter(null);
+                scriptRunner.runScript(new FileReader(tableFile));
+            }
+            connection.commit();
+        } catch (NullPointerException e) {
+            throw new IOException();
         }
-        connection.commit();
     }
 
-    static void generateTestData(Connection connection, File[] testDataFiles) throws SQLException, IOException {
+    static void createTestData(Connection connection, File[] testDataFiles) throws SQLException, IOException {
         List<String> courses = readCourses(testDataFiles[0]);
-        int firstNamePos = 0;
-        int lastNamePos = 1;
-        try (PreparedStatement statement = connection.prepareStatement(INSERT_GROUPS)) {
-            for (String groupName : generateGroups()) {
-                statement.setString(1, groupName);
-                statement.executeUpdate();
-            }
-        }
-        try (PreparedStatement statement = connection.prepareStatement(INSERT_COURSES)) {
-            for (String course : courses) {
-                statement.setString(1, course);
-                statement.executeUpdate();
-            }
-        }
-        try (PreparedStatement statement = connection.prepareStatement(INSERT_STUDENTS)) {
-            for (String student : generateStudents(testDataFiles[1], testDataFiles[2])) {
-                statement.setString(1, student.split(WHITESPACE)[firstNamePos]);
-                statement.setString(2, student.split(WHITESPACE)[lastNamePos]);
-                statement.executeUpdate();
-            }
-        }
+        List<String> courseDescription = readCoursesDescription(testDataFiles[1]);
+        File firstNamesFile = testDataFiles[2];
+        File lastNamesFile = testDataFiles[3];
+
+        insertGroups(connection);
+        insertStudents(connection, firstNamesFile, lastNamesFile);
+        insertCourses(connection, courses, courseDescription);
         relateTestData(connection, courses);
-        connection.commit();
     }
 
     private static void relateTestData(Connection connection, List<String> courses) throws SQLException {
         List<Integer> groupIds = IntStream.range(1, NUMBER_OF_GROUPS + ID_GENERATION_ADJUSTER).boxed().collect(Collectors.toList());
         List<Integer> studentIds = IntStream.range(1, NUMBER_OF_STUDENTS + ID_GENERATION_ADJUSTER).boxed().collect(Collectors.toList());
+        List<Integer> courseIds = IntStream.range(1, courses.size() + ID_GENERATION_ADJUSTER).boxed().collect(Collectors.toList());
+
+        assignStudentsToCourse(connection, studentIds, courseIds);
+        assignStudentsToGroups(connection, studentIds, groupIds);
+    }
+
+    private static void assignStudentsToCourse(Connection connection,
+                                               List<Integer> studentIds, List<Integer> courseIds) throws SQLException {
+
         for (int studentId : studentIds) {
             int coursesNumberForStudent = new Random().nextInt(2) + MINIMUM_COURSES;
+            List<Integer> availableCourses = new ArrayList<>(courseIds);
             for (int i = 1; i <= coursesNumberForStudent; i++) {
-                int courseId = new Random().nextInt(courses.size()) + ID_GENERATION_ADJUSTER;
+                int courseId = availableCourses.remove(new Random().nextInt(availableCourses.size()));
                 try (PreparedStatement statement = connection.prepareStatement(ASSIGN_TO_COURSE)) {
                     statement.setInt(1, studentId);
                     statement.setInt(2, courseId);
@@ -79,6 +78,10 @@ final class DBConfigurator {
                 }
             }
         }
+        connection.commit();
+    }
+
+    private static void assignStudentsToGroups(Connection connection, List<Integer> studentIds, List<Integer> groupIds) throws SQLException {
         for (int counter = 0; counter < new Random().nextInt(NUMBER_OF_GROUPS); counter++) {
             int groupId = groupIds.remove(new Random().nextInt(groupIds.size()));
             int studentsInGroup = new Random().nextInt(20) + MINIMUM_PER_GROUP;
@@ -91,6 +94,42 @@ final class DBConfigurator {
                 }
             }
         }
+        connection.commit();
+    }
+
+    private static void insertGroups(Connection connection) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(INSERT_GROUPS)) {
+            for (String groupName : generateGroups()) {
+                statement.setString(1, groupName);
+                statement.executeUpdate();
+            }
+        }
+        connection.commit();
+    }
+
+    private static void insertStudents(Connection connection, File firstNamesFile, File lastNamesFile) throws SQLException, IOException {
+        int firstNamePos = 0;
+        int lastNamePos = 1;
+        try (PreparedStatement statement = connection.prepareStatement(INSERT_STUDENTS)) {
+            for (String student : generateStudents(firstNamesFile, lastNamesFile)) {
+                statement.setString(1, student.split(WHITESPACE)[firstNamePos]);
+                statement.setString(2, student.split(WHITESPACE)[lastNamePos]);
+                statement.executeUpdate();
+            }
+        }
+        connection.commit();
+    }
+
+    private static void insertCourses(Connection connection,
+                                      List<String> courses, List<String> courseDescriptions) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(INSERT_COURSES)) {
+            for (int index = 0; index < courses.size(); index++) {
+                statement.setString(1, courses.get(index));
+                statement.setString(2, courseDescriptions.get(index));
+                statement.executeUpdate();
+            }
+        }
+        connection.commit();
     }
 
     private static List<String> generateGroups() {
@@ -109,6 +148,10 @@ final class DBConfigurator {
             groups.add(groupName.toString());
         }
         return groups;
+    }
+
+    private static List<String> readCoursesDescription(File courseDescription) throws IOException {
+        return Files.readAllLines(courseDescription.toPath());
     }
 
     private static List<String> readCourses(File courses) throws IOException {

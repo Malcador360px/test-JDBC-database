@@ -14,6 +14,10 @@ public class Config {
 
     private Config() {}
 
+    public static String[] getArrayProperty(String key) {
+        return getProperty(key).split(ARRAY_DELIMITER);
+    }
+
     public static String getProperty(String key) {
         Properties properties = new Properties();
         try {
@@ -24,17 +28,5 @@ public class Config {
             LOGGER.warning(PROPERTIES_ERR);
         }
         return "";
-    }
-
-    public static String[] getArrayProperty(String key) {
-        Properties properties = new Properties();
-        try {
-            FileInputStream in = new FileInputStream(FileUtil.getFile(CONFIG_FILE_NAME));
-            properties.load(in);
-            return properties.getProperty(key).split(ARRAY_DELIMITER);
-        } catch (IOException e) {
-            LOGGER.warning(PROPERTIES_ERR);
-        }
-        return new String[0];
     }
 }
