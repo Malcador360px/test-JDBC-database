@@ -24,7 +24,7 @@ public final class CommandsManager {
                     new AbstractMap.SimpleEntry<Integer, Runnable>(7, () -> DBManager.exitDB(connection)))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)).get(new Scanner(System.in).nextInt()).run();
         } catch (InputMismatchException | NullPointerException e) {
-            System.err.println(INPUT_ERR);
+            System.out.println(INPUT_ERR);
         }
     }
 }
