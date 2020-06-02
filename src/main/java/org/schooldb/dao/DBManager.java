@@ -66,7 +66,7 @@ public final class DBManager {
         } catch (SQLException e) {
             LOGGER.warning(SQL_ERROR_WARNING);
         } catch (IllegalArgumentException e) {
-            System.err.println(RECORD_NOT_FOUND);
+            System.out.println(RECORD_NOT_FOUND);
         }
     }
 
@@ -85,7 +85,7 @@ public final class DBManager {
         } catch (SQLException e) {
             LOGGER.warning(SQL_ERROR_WARNING);
         } catch (IllegalArgumentException e) {
-            System.err.println(STUDENT_ALREADY_IN_DB);
+            System.out.println(STUDENT_ALREADY_IN_DB);
         }
     }
 
@@ -102,7 +102,7 @@ public final class DBManager {
         } catch (SQLException e) {
             LOGGER.warning(SQL_ERROR_WARNING);
         } catch (IllegalArgumentException e) {
-            System.err.println(RECORD_NOT_FOUND);
+            System.out.println(RECORD_NOT_FOUND);
         }
     }
 
@@ -128,9 +128,9 @@ public final class DBManager {
         } catch (SQLException e) {
             LOGGER.warning(SQL_ERROR_WARNING);
         } catch (IllegalCharsetNameException e) {
-            System.err.println(STUDENT_ALREADY_ASSIGN);
+            System.out.println(STUDENT_ALREADY_ASSIGN);
         } catch (IllegalArgumentException e) {
-            System.err.println(RECORD_NOT_FOUND);
+            System.out.println(RECORD_NOT_FOUND);
         }
     }
 
@@ -156,9 +156,9 @@ public final class DBManager {
         } catch (SQLException e) {
             LOGGER.warning(SQL_ERROR_WARNING);
         } catch (IllegalCharsetNameException e) {
-            System.err.println(STUDENT_WRONG_COURSE);
+            System.out.println(STUDENT_WRONG_COURSE);
         } catch (IllegalArgumentException e) {
-            System.err.println(RECORD_NOT_FOUND);
+            System.out.println(RECORD_NOT_FOUND);
         }
     }
 

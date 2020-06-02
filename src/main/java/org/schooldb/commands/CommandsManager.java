@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 
 public final class CommandsManager {
 
-    private static final String INPUT_ERR = "Incorrect input, please use only requested sequences";
+    private static final String INPUT_ERR = "Incorrect input, please use only requested sequences\n";
 
     private CommandsManager() {}
 

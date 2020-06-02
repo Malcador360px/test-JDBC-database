@@ -19,9 +19,10 @@ class FileUtilTest {
     @Test
     void getFile() {
         try {
-            assertEquals(new File(ClassLoader.getSystemResource(TEST_FILE).toURI()), FileUtil.getFile(TEST_FILE));
+            assertEquals(new File(ClassLoader.getSystemResource(TEST_FILE).toURI()), FileUtil.getFile(TEST_FILE),
+                    "File loaded incorrectly");
         } catch (FileNotFoundException | URISyntaxException e) {
-            fail();
+            fail("File should be loaded");
         }
     }
 
@@ -30,9 +31,11 @@ class FileUtilTest {
         try {
             File[] expected = {new File(ClassLoader.getSystemResource(SOME_FILE).toURI()),
                     new File(ClassLoader.getSystemResource(TEST_FILE).toURI())};
-            assertArrayEquals(expected, FileUtil.getFile(TEST_FILE_NAMES));
+
+            assertArrayEquals(expected, FileUtil.getFile(TEST_FILE_NAMES),
+                    "Files returned incorrectly");
         } catch (URISyntaxException e) {
-            fail();
+            fail("Method should return array of multiple loaded files");
         }
     }
 
@@ -40,7 +43,7 @@ class FileUtilTest {
     void getNonExistentFile() {
         try {
             FileUtil.getFile(NON_EXISTENT_FILE);
-            fail();
+            fail("File that don't exist can't be loaded");
         } catch (FileNotFoundException ignore) {
         }
     }
@@ -49,9 +52,9 @@ class FileUtilTest {
     void getFileFromFolder() {
         try {
             assertEquals(new File(ClassLoader.getSystemResource(FOLDER + TEST_FILE_IN_FOLDER).toURI()),
-                    FileUtil.getFile(TEST_FILE_IN_FOLDER, FOLDER));
+                    FileUtil.getFile(TEST_FILE_IN_FOLDER, FOLDER), "File loaded incorrectly from folder");
         } catch (FileNotFoundException | URISyntaxException e) {
-            fail();
+            fail("File should be loaded from folder properly");
         }
     }
 }

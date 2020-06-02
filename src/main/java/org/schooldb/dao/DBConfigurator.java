@@ -13,6 +13,7 @@ final class DBConfigurator {
 
     private static final int NUMBER_OF_STUDENTS = 200;
     private static final int NUMBER_OF_GROUPS = 10;
+    private static final int MINIMUM_GROUPS = 5;
     private static final int MINIMUM_PER_GROUP = 10;
     private static final int MINIMUM_COURSES = 1;
     private static final int ID_GENERATION_ADJUSTER = 1;
@@ -82,7 +83,7 @@ final class DBConfigurator {
     }
 
     private static void assignStudentsToGroups(Connection connection, List<Integer> studentIds, List<Integer> groupIds) throws SQLException {
-        for (int counter = 0; counter < new Random().nextInt(NUMBER_OF_GROUPS); counter++) {
+        for (int counter = 0; counter < new Random().nextInt(5) + MINIMUM_GROUPS; counter++) {
             int groupId = groupIds.remove(new Random().nextInt(groupIds.size()));
             int studentsInGroup = new Random().nextInt(20) + MINIMUM_PER_GROUP;
             for (int student = 0; student < studentsInGroup ; student++) {
